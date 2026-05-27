@@ -16,7 +16,11 @@
 #include <string>
 #include <thread>
 #include <unistd.h>
-#include <util.h>  // openpty on macOS; on Linux this is <pty.h>
+#if defined(__APPLE__)
+#include <util.h>   // openpty
+#else
+#include <pty.h>    // openpty on glibc/musl Linux (needs -lutil at link)
+#endif
 
 #define MAVLINK_HELPER static inline
 #include <mavlink.h>

@@ -40,6 +40,9 @@ target_link_libraries(board_mock PRIVATE might_mavlink)
 
 add_executable(loopback_test examples/loopback_test.cpp)
 target_link_libraries(loopback_test PRIVATE might_mavlink)
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+  target_link_libraries(loopback_test PRIVATE util)  # openpty
+endif()
 target_include_directories(loopback_test PRIVATE
   ${mavlink_c_SOURCE_DIR}
   ${mavlink_c_SOURCE_DIR}/common
