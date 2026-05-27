@@ -8,11 +8,6 @@
 #include <termios.h>
 #include <unistd.h>
 
-#ifdef __linux__
-#include <asm/termbits.h>
-#include <sys/ioctl.h>
-#endif
-
 #ifdef __APPLE__
 #include <IOKit/serial/ioss.h>
 #include <sys/ioctl.h>
@@ -73,24 +68,11 @@ bool applyTermios(int fd, int baud) {
         return false;
     }
 
-    // For non-standard rates (or to set exact rate on Linux), use BOTHER via termios2.
-#ifdef __linux__
+    // Non-standard baud rates: macOS uses IOSSIOSPEED. Other platforms (Linux,
+    // embedded Buildroot targets) only support the standard B* constants -- that
+    // covers our actual use case (115200) and keeps us off libc-specific paths.
+#ifdef __APPLE__
     if (s == 0) {
-        struct termios2 t2{};
-        if (ioctl(fd, TCGETS2, &t2) == 0) {
-            t2.c_cflag &= ~CBAUD;
-            t2.c_cflag |= BOTHER;
-            t2.c_ispeed = baud;
-            t2.c_ospeed = baud;
-            if (ioctl(fd, TCSETS2, &t2) != 0) {
-                std::fprintf(stderr, "[SerialPort] TCSETS2 (%d baud): %s\n", baud, std::strerror(errno));
-                return false;
-            }
-        }
-    }
-#elif defined(__APPLE__)
-    if (s == 0) {
-        // macOS lacks B* constants above 230400; use IOSSIOSPEED for arbitrary rates.
         // Pseudo-terminals (e.g. /dev/ttysNNN created by openpty/socat) don't
         // implement this ioctl -- baud is meaningless on a software pipe -- so
         // accept the failure silently when the fd points at a PTY.
@@ -108,7 +90,7 @@ bool applyTermios(int fd, int baud) {
     }
 #else
     if (s == 0) {
-        std::fprintf(stderr, "[SerialPort] baud %d not supported on this platform\n", baud);
+        std::fprintf(stderr, "[SerialPort] baud %d not in the standard B* table on this platform\n", baud);
         return false;
     }
 #endif
