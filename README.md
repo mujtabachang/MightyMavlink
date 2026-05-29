@@ -181,6 +181,8 @@ long MAV_CMD_USER_3 0 0 0 0 0 0 0      # RESET (no-op handler)
 long MAV_CMD_USER_2 0 0 0 0 0 0 0      # STOP
 ```
 
+Run `set target_component` with no value to print the current target and confirm the switch took effect.
+
 Each line should produce `Got COMMAND_ACK: USER_n: ACCEPTED` in MAVProxy and a `[cmd] ...` line in `board_mock`'s terminal. After START, ODOMETRY starts appearing in QGC's MAVLink Inspector under compid 197.
 
 When you want subsequent commands to go to the autopilot again, flip back with `set target_component 1`. If a `long ...` returns `UNSUPPORTED` instead of `ACCEPTED`, the target wasn't switched — the autopilot received the command and rejected it.
